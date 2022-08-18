@@ -6,11 +6,11 @@ Extend an LVM volume.
 Requirements
 ------------
 
-community.general.parted module
-community.general.lvg module
-community.general.lvol module
-parted package
-gdisk package
+* community.general.parted module
+* community.general.lvg module
+* community.general.lvol module
+* parted package
+* gdisk package
 
 Role Variables
 --------------
