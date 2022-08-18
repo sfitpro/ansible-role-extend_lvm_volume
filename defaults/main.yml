@@ -1,0 +1,7 @@
+---
+# defaults file for extend_lvm_volume
+device_name: "/dev/sdb"
+part_end_pct: "100%"
+pv_name: "/dev/sdb1"
+vg_name: "vg_app"
+lv_name: "lv_app"

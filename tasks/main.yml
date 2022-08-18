@@ -1,0 +1,59 @@
+---
+# tasks file for extend_lvm_volume
+- name: read device information
+  become: true
+  community.general.parted:
+    device: "{{ device_name }}"
+    unit: MiB
+  register: device_info
+
+# - name: display info
+#   ansible.builtin.debug:
+#     # msg: "{{ device_info.partitions }}"
+#     # msg: "{{ device_info }"
+#     msg: "{{ device_info.disk.table }}"
+
+- name: install gdisk
+  become: true
+  ansible.builtin.package:
+    name: gdisk
+    state: present
+  when: device_info.disk.table == "gpt"
+
+- name: move backup GPT data structures to the end of the disk
+  become: true
+  ansible.builtin.shell:
+    cmd: sgdisk -e "{{ device_name }}"
+  when: device_info.disk.table == "gpt"
+  register: sgdisk_result
+
+- name: inform the OS of partition table change
+  become: true
+  ansible.builtin.shell:
+    cmd: partprobe "{{ device_name }}"
+  when: sgdisk_result.changed
+
+- name: extend an existing partition to fill percentage of total space
+  become: true
+  community.general.parted:
+    device: "{{ device_name }}"
+    label: "{{ device_info.disk.table }}"
+    number: "{{ device_info.partitions | length }}"
+    part_end: "{{ part_end_pct }}"
+    resize: true
+    state: present
+
+- name: extend an existing volume group to fill the maximum available space
+  become: true
+  community.general.lvg:
+    vg: "{{ vg_name }}"
+    pvs: "{{ pv_name }}"
+    pvresize: true
+
+- name: extend an existing logical volume to fill the maximum available volume group space and resize the file system
+  become: true
+  community.general.lvol:
+    vg: "{{ vg_name }}"
+    lv: "{{ lv_name }}"
+    size: 100%VG
+    resizefs: true
